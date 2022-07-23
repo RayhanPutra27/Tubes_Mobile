@@ -1,6 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tubes_mobile/Utils/auth_services.dart';
+import 'package:tubes_mobile/sign_in_page.dart';
 import 'package:tubes_mobile/transfer_page.dart';
 import 'isi_pulsa_page.dart';
+
+final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
 class HomePage extends StatefulWidget {
   @override
@@ -8,7 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List _menu = ['Isi Pulsa', 'Transfer', 'Pembayaran', 'Aktivitas'];
+  final List _menu = ['Credits', 'Transfer', 'Payment', 'Activity'];
 
   Widget _saldo() {
     return Column(
@@ -18,7 +23,7 @@ class _HomePageState extends State<HomePage> {
         Container(
           margin: const EdgeInsets.only(bottom: 12.0),
           child: const Text(
-            "Saldo: ",
+            "Balance: ",
             style: TextStyle(fontSize: 17, color: Colors.white),
           ),
         ),
@@ -87,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                           child: Padding(
                             padding: EdgeInsets.only(left: 12),
                             child: Text(
-                              'Nama',
+                              'Name/Email',
                               style: TextStyle(color: Colors.white),
                             ),
                           )),
@@ -112,16 +117,28 @@ class _HomePageState extends State<HomePage> {
                         itemBuilder: (BuildContext context, index) {
                           return GestureDetector(
                             onTap: () {
-                              if (_menu[index] == 'Isi Pulsa') {
+                              if (_menu[index] == 'Credits') {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => IsiPulsaPage()));
-                              } else if(_menu[index] == 'Transfer') {
+                              } else if (_menu[index] == 'Transfer') {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => TransferPage()));
+                              } else if (_menu[index] == 'Activity') {
+                                AuthService service =
+                                    AuthService(FirebaseAuth.instance);
+                                // addPage();
+                                service.logOut();
+                                if (_firebaseAuth.currentUser == null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => SigninPage()),
+                                  );
+                                }
                               }
                               print('item : ${_menu[index]} Pressed');
                             },

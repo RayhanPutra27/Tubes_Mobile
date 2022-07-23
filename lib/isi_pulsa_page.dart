@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:tubes_mobile/Utils/firestore_services.dart';
 
 class IsiPulsaPage extends StatefulWidget {
   @override
@@ -7,7 +10,11 @@ class IsiPulsaPage extends StatefulWidget {
 }
 
 class _IsiPulsaPageState extends State<IsiPulsaPage> {
-  TextEditingController nomorController = TextEditingController();
+  TextEditingController numberController = TextEditingController();
+  TextEditingController nominalController = TextEditingController();
+  String nominalValue = '';
+  String currentTime = DateFormat.Hm().format(DateTime.now());
+  String currentDate = DateFormat.yMd().format(DateTime.now());
   final List _nominal = [
     10000,
     20000,
@@ -20,13 +27,27 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
   ];
 
   @override
+  void initState() {
+    // TODO: implement initState
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    nominalController.dispose();
+    numberController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(),
       body: Container(
-        margin: EdgeInsets.all(18),
+        margin: const EdgeInsets.all(18),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -37,9 +58,9 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Masukkan Nomor Tujuan:"),
+                    const Text("Enter Destination Number :"),
                     TextField(
-                      controller: nomorController,
+                      controller: numberController,
                     )
                   ],
                 )),
@@ -56,13 +77,10 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                     itemBuilder: (BuildContext context, index) {
                       return GestureDetector(
                         onTap: () {
-                          if (_nominal[index] == 'Isi Pulsa') {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => IsiPulsaPage()));
-                          }
-                          print('item : ${_nominal[index]} Pressed');
+                          setState(() {
+                            nominalController.text = _nominal[index].toString();
+                            print('item : ${_nominal[index]} Pressed');
+                          });
                         },
                         child: Container(
                           alignment: Alignment.center,
@@ -85,17 +103,71 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(child: TextField(
-                      controller: nomorController,
-                      decoration: InputDecoration(
-                          hintText: "Masukkan Manual Nominal (Min. 10.000)"),
-                    ),),
-                    SizedBox(width: 18,),
-                    ElevatedButton(onPressed: () {}, child: Text("Isi"))
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) {},
+                        controller: nominalController,
+                        decoration: const InputDecoration(
+                            labelText: "Enter Nominal (Min. 10.000)"),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 18,
+                    ),
+                    ElevatedButton(
+                        onPressed: () async {
+                          var user = await FirebaseAuth.instance.currentUser!;
+                          var uid = user.uid;
+                          String currentTime =
+                              DateFormat.Hm().format(DateTime.now());
+                          String currentDate =
+                              DateFormat.yMd().format(DateTime.now());
+                          FirestoreServices fs = FirestoreServices();
+
+                          print("UID      :::: $uid");
+                          print("number   :::: ${numberController.text}");
+                          print("Nominal  :::: ${nominalController.text}");
+                          print("Time     :::: $currentTime");
+                          print("Date     :::: $currentDate");
+                          if (numberController.text == "" ||
+                              nominalController.text == "") {
+                            if (numberController.text == "") {
+                              warnData("Number Still Empty");
+                            } else {
+                              warnData("Nominal Still Empty");
+                            }
+                          } else {
+                            if (numberController.text.length < 10) {
+                              warnData("Number must be more than 10");
+                            } else if (int.parse(nominalController.text) <
+                                10000) {
+                              warnData("Nominal must be more than 10000");
+                            } else {
+                              final result = await fs.addCredits(
+                                  uid: uid,
+                                  destNum: numberController.text,
+                                  nominal: int.parse(nominalController.text),
+                                  date: currentDate,
+                                  time: currentTime);
+                              if(result!.contains("success")) {
+                                warnData('Data Uploaded');
+                              }
+                            }
+                          }
+                        },
+                        child: const Text("Send"))
                   ],
                 ))
           ],
         ),
+      ),
+    );
+  }
+
+  void warnData(String warn) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(warn),
       ),
     );
   }
