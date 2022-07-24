@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,11 @@ class AuthService {
           .then((value) async {
         prefs = await SharedPreferences.getInstance();
         prefs.setString('uid', value.user!.uid.toString());
+        final data = <String, dynamic>{"email": email, "balance": 100000000};
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(value.user!.uid.toString())
+            .set(data);
       });
       return 'Success';
     } on FirebaseAuthException catch (e) {
@@ -38,9 +44,23 @@ class AuthService {
 
   Future<String?> signIn(
       {required String email, required String password}) async {
+    SharedPreferences prefs;
     try {
+      prefs = await SharedPreferences.getInstance();
       await _firebaseAuth.signInWithEmailAndPassword(
-          email: email, password: password);
+          email: email, password: password).then((value) {
+            prefs.setString('uid', value.user!.uid);
+      });
+
+      final db = await FirebaseFirestore.instance;
+      db.collection("users").doc(prefs.getString('uid')).get().then((value){
+        prefs.setString('email', value.data()!['email']);
+        prefs.setInt('balance', value.data()!['balance']);
+        print(value.data());
+        print(prefs.getInt('balance'));
+        print(prefs.getString('email'));
+      });
+
       return 'Success';
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

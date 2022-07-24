@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tubes_mobile/Views/home_page.dart';
 import 'package:tubes_mobile/firebase_options.dart';
-import 'package:tubes_mobile/sign_in_page.dart';
-import 'home_page.dart';
+import 'package:tubes_mobile/Views/sign_in_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

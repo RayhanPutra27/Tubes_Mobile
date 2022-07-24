@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tubes_mobile/Utils/firestore_services.dart';
+import 'package:tubes_mobile/Services/firestore_services.dart';
 
 class TransferPage extends StatefulWidget {
   @override
@@ -143,17 +143,14 @@ class _TransferPageState extends State<TransferPage> {
                           _nominalController.text == "") {
                         warnData("Fill the empty data!");
                       } else {
-                        final result = await fs.addTransfer(
+                        fs.addTransfer(
                             uid: uid,
                             destBank: _bankController.text,
                             destAcc: int.parse(_destController.text),
                             nominal: int.parse(_nominalController.text),
-                            date: currentDate,
-                            time: currentTime);
+                            created: DateTime.now());
 
-                        if (result!.contains("success")) {
-                          warnData('Data Uploaded');
-                        }
+                        Navigator.pop(context);
                       }
                     },
                     child: Text('Transfer'),

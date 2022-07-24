@@ -2,14 +2,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tubes_mobile/Utils/firestore_services.dart';
+import 'package:tubes_mobile/Services/firestore_services.dart';
+import 'package:tubes_mobile/views/home_page.dart';
 
-class IsiPulsaPage extends StatefulWidget {
+class CreditsPage extends StatefulWidget {
   @override
-  State<IsiPulsaPage> createState() => _IsiPulsaPageState();
+  State<CreditsPage> createState() => _CreditsPageState();
 }
 
-class _IsiPulsaPageState extends State<IsiPulsaPage> {
+class _CreditsPageState extends State<CreditsPage> {
   TextEditingController numberController = TextEditingController();
   TextEditingController nominalController = TextEditingController();
   String nominalValue = '';
@@ -46,7 +47,8 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(),
-      body: Container(
+      body: SafeArea(
+          child: Container(
         margin: const EdgeInsets.all(18),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -79,7 +81,7 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                         onTap: () {
                           setState(() {
                             nominalController.text = _nominal[index].toString();
-                            print('item : ${_nominal[index]} Pressed');
+                            // print('item : ${_nominal[index]} Pressed');
                           });
                         },
                         child: Container(
@@ -127,8 +129,7 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                           print("UID      :::: $uid");
                           print("number   :::: ${numberController.text}");
                           print("Nominal  :::: ${nominalController.text}");
-                          print("Time     :::: $currentTime");
-                          print("Date     :::: $currentDate");
+                          print("Time     :::: ${DateTime.now()}");
                           if (numberController.text == "" ||
                               nominalController.text == "") {
                             if (numberController.text == "") {
@@ -143,15 +144,12 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                                 10000) {
                               warnData("Nominal must be more than 10000");
                             } else {
-                              final result = await fs.addCredits(
+                              fs.addCredits(
                                   uid: uid,
                                   destNum: numberController.text,
                                   nominal: int.parse(nominalController.text),
-                                  date: currentDate,
-                                  time: currentTime);
-                              if(result!.contains("success")) {
-                                warnData('Data Uploaded');
-                              }
+                                  created: DateTime.now());
+                              Navigator.pop(context);
                             }
                           }
                         },
@@ -160,7 +158,7 @@ class _IsiPulsaPageState extends State<IsiPulsaPage> {
                 ))
           ],
         ),
-      ),
+      )),
     );
   }
 

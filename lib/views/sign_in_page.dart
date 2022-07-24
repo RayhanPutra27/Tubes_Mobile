@@ -1,24 +1,45 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tubes_mobile/Utils/auth_services.dart';
+import 'package:tubes_mobile/Services/auth_services.dart';
+import 'package:tubes_mobile/Views/home_page.dart';
+import 'package:tubes_mobile/Views/sign_up_page.dart';
 
-import 'sign_in_page.dart';
+String username = '';
 
-class SignupPage extends StatefulWidget {
+class SigninPage extends StatefulWidget {
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  State<SigninPage> createState() => _SigninPageState();
 }
 
-class _SignupPageState extends State<SignupPage> {
-  final emailController = TextEditingController();
+class _SigninPageState extends State<SigninPage> {
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-
   late SharedPreferences prefs;
+  late bool newuser;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    checkLogin();
+  }
+
+  void checkLogin() async {
+    prefs = await SharedPreferences.getInstance();
+    newuser = (prefs.getBool('login') ?? true);
+    print(newuser);
+    if (newuser == false) {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => HomePage()));
+    }
+  }
+
+  @override
   void dispose() {
     // Clean up the controller when the widget is disposed.
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -33,7 +54,7 @@ class _SignupPageState extends State<SignupPage> {
           alignment: Alignment.centerLeft,
           height: 60.0,
           child: TextField(
-            controller: emailController,
+            controller: usernameController,
             keyboardType: TextInputType.emailAddress,
             style: TextStyle(
               color: Colors.black,
@@ -91,28 +112,49 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  Widget _SignupBtn() {
+  Widget _ForgotPasswordBtn() {
+    return Container(
+      alignment: Alignment.centerRight,
+      child: FlatButton(
+        color: Colors.white,
+        onPressed: () {
+          print("onPressed");
+          // AuthService service = AuthService(FirebaseAuth.instance);
+          // service.signInWithGoogle(context: context);
+          // Navigator.pushReplacement(context,
+          //     MaterialPageRoute(builder: (context) => LandingPage()));
+        },
+        padding: EdgeInsets.only(right: 0.0),
+        child: Text(
+          'Login using google',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'OpenSans',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _LoginBtn() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 25.0),
       width: double.infinity,
       child: RaisedButton(
         elevation: 5.0,
         onPressed: () async {
-          String email = emailController.text;
+          // prefs = await SharedPreferences.getInstance();
+          String username = usernameController.text;
           String password = passwordController.text;
 
           AuthService service = AuthService(FirebaseAuth.instance);
           final message =
-          await service.signUp(email: email, password: password);
-          prefs = await SharedPreferences.getInstance();
-
+              await service.signIn(email: username, password: password);
           if (message!.contains('Success')) {
-            // FirebaseFirestore.instance.collection('users').doc(prefs.getString('uid')).collection('IsiPulsa');
-            // print(prefs.getString('uid'));
             Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => SigninPage()));
+                context, MaterialPageRoute(builder: (context) => HomePage()));
           }
-
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
@@ -125,7 +167,7 @@ class _SignupPageState extends State<SignupPage> {
         ),
         color: Color(0xFF006EF5),
         child: const Text(
-          'Sign Up',
+          'Sign In',
           style: TextStyle(
             color: Colors.white,
             letterSpacing: 1.5,
@@ -138,18 +180,17 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  Widget _SigninBtn() {
+  Widget _SignupBtn() {
     return GestureDetector(
-      onTap: () =>
-      {
-        Navigator.pop(
-            context, MaterialPageRoute(builder: (context) => SigninPage()))
+      onTap: () => {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => SignupPage()))
       },
       child: RichText(
         text: const TextSpan(
           children: [
             TextSpan(
-              text: 'Already have an Account? ',
+              text: 'Don\'t have an Account? ',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 18.0,
@@ -157,7 +198,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             TextSpan(
-              text: 'Sign In',
+              text: 'Sign Up',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 18.0,
@@ -174,7 +215,8 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-      body: Container(
+      body: SafeArea(
+          child: Container(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Stack(
@@ -208,7 +250,7 @@ class _SignupPageState extends State<SignupPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
                             Text(
-                              'Sign Up',
+                              'Sign In',
                               style: TextStyle(
                                 color: Colors.black,
                                 fontFamily: 'OpenSans',
@@ -223,8 +265,8 @@ class _SignupPageState extends State<SignupPage> {
                             ),
                             _passwordItem(),
                             // _ForgotPasswordBtn(),
+                            _LoginBtn(),
                             _SignupBtn(),
-                            _SigninBtn(),
                           ],
                         ),
                       ),
@@ -235,7 +277,7 @@ class _SignupPageState extends State<SignupPage> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

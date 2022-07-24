@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:tubes_mobile/Utils/auth_services.dart';
-import 'package:tubes_mobile/sign_in_page.dart';
-import 'package:tubes_mobile/transfer_page.dart';
-import 'isi_pulsa_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tubes_mobile/Services/auth_services.dart';
+import 'package:tubes_mobile/Views/payment_page.dart';
+import 'package:tubes_mobile/Views/sign_in_page.dart';
+import 'package:tubes_mobile/views/activity_page.dart';
+import 'package:tubes_mobile/views/transfer_page.dart';
+import 'credits_page.dart';
 
 final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
@@ -14,6 +18,22 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List _menu = ['Credits', 'Transfer', 'Payment', 'Activity'];
+  late SharedPreferences prefs;
+  String email = '';
+  int balance = 0;
+
+  @override
+  void initState() {
+    setData();
+    super.initState();
+  }
+
+  setData() async {
+    prefs = await SharedPreferences.getInstance();
+    email = prefs.getString('email').toString();
+    balance = prefs.getInt('balance')!;
+    print("asd: $email $balance");
+  }
 
   Widget _saldo() {
     return Column(
@@ -28,8 +48,8 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         Container(
-          child: const Text(
-            "123456789",
+          child: Text(
+            balance.toString(),
             style: TextStyle(fontSize: 22, color: Colors.white),
           ),
         ),
@@ -41,16 +61,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-      body: Stack(
+      body: SafeArea(
+          child: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Color(0xFFE5E5E5),
             ),
             child: Column(
               children: [
                 Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: Container(
                       decoration: const BoxDecoration(
                         borderRadius: BorderRadius.only(
@@ -61,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     )),
                 Expanded(
-                    flex: 7,
+                    flex: 6,
                     child: Container(
                         // decoration: const BoxDecoration(color: Color(0xFFd2d2d2)),
                         )),
@@ -69,7 +90,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Container(
-            margin: const EdgeInsets.all(18),
+            margin: const EdgeInsets.only(left: 18, right: 18, bottom: 18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -78,29 +99,60 @@ class _HomePageState extends State<HomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
+                    children: [
                       Expanded(
                         flex: 1,
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 34,
+                        child: IconButton(
+                          onPressed: () {
+                            setData();
+                          },
+                          icon: Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 34,
+                          ),
                         ),
                       ),
                       Expanded(
-                          flex: 9,
+                          flex: 8,
                           child: Padding(
                             padding: EdgeInsets.only(left: 12),
                             child: Text(
-                              'Name/Email',
-                              style: TextStyle(color: Colors.white),
+                              email.toString(),
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          )),
+                      Expanded(
+                          flex: 1,
+                          child: IconButton(
+                            onPressed: () async {
+                              AuthService service =
+                                  AuthService(FirebaseAuth.instance);
+                              // addPage();
+                              await prefs.clear();
+                              service.logOut();
+                              if (_firebaseAuth.currentUser == null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => SigninPage()),
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.logout,
+                              color: Colors.white,
+                              size: 28,
                             ),
                           )),
                     ],
                   ),
                 ),
                 Center(
-                  child: _saldo(),
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 18),
+                    child: _saldo(),
+                  ),
                 ),
                 const SizedBox(
                   height: 36,
@@ -116,29 +168,35 @@ class _HomePageState extends State<HomePage> {
                         itemCount: _menu.length,
                         itemBuilder: (BuildContext context, index) {
                           return GestureDetector(
-                            onTap: () {
+                            onTap: () async {
                               if (_menu[index] == 'Credits') {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => IsiPulsaPage()));
+                                        builder: (context) =>
+                                            CreditsPage())).then((value) {
+                                  email = prefs.getString('email')!;
+                                  balance = prefs.getInt('balance')!;
+                                });
                               } else if (_menu[index] == 'Transfer') {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => TransferPage()));
-                              } else if (_menu[index] == 'Activity') {
-                                AuthService service =
-                                    AuthService(FirebaseAuth.instance);
-                                // addPage();
-                                service.logOut();
-                                if (_firebaseAuth.currentUser == null) {
-                                  Navigator.push(
+                                        builder: (context) =>
+                                            TransferPage())).then((value) {
+                                  email = prefs.getString('email')!;
+                                  balance = prefs.getInt('balance')!;
+                                });
+                              } else if (_menu[index] == 'Payment') {
+                                Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => SigninPage()),
-                                  );
-                                }
+                                        builder: (context) => PaymentPage()));
+                              } else if (_menu[index] == 'Activity') {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => ActivityPage()));
                               }
                               print('item : ${_menu[index]} Pressed');
                             },
@@ -166,7 +224,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }
